@@ -1,3 +1,5 @@
+use core::fmt::{self, Display};
+
 use specs::{Component, NullStorage, VecStorage, World, WorldExt};
 
 #[derive(Debug, Component, Clone, Copy)]
@@ -11,7 +13,7 @@ pub struct Position {
 #[derive(Component)]
 #[storage(VecStorage)]
 pub struct Renderable {
-    pub path: String,
+    paths: Vec<String>,
 }
 
 #[derive(Component)]
@@ -24,11 +26,15 @@ pub struct Player {}
 
 #[derive(Component)]
 #[storage(VecStorage)]
-pub struct Box {}
+pub struct Box {
+    pub color: BoxColor,
+}
 
 #[derive(Component)]
 #[storage(VecStorage)]
-pub struct BoxSpot {}
+pub struct BoxSpot {
+    pub color: BoxColor,
+}
 
 #[derive(Component, Default)]
 #[storage(NullStorage)]
@@ -38,6 +44,48 @@ pub struct Movable;
 #[storage(NullStorage)]
 pub struct Immovable;
 
+#[derive(PartialEq)]
+pub enum BoxColor {
+    Red,
+    Blue,
+}
+
+pub enum RenderableKind {
+    Static,
+    Animated,
+}
+
+impl Display for BoxColor {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.write_str(match self {
+            BoxColor::Red => "red",
+            BoxColor::Blue => "blue",
+        })?;
+        Ok(())
+    }
+}
+
+impl Renderable {
+    pub fn new_static(path: String) -> Self {
+        Self { paths: vec![path] }
+    }
+
+    pub fn new_animated(paths: Vec<String>) -> Self {
+        Self { paths }
+    }
+
+    pub fn kind(&self) -> RenderableKind {
+        match self.paths.len() {
+            0 => panic!("invalid renderable!"),
+            1 => RenderableKind::Static,
+            _ => RenderableKind::Animated,
+        }
+    }
+
+    pub fn path(&self, path_index: usize) -> String {
+        self.paths[path_index % self.paths.len()].clone()
+    }
+}
 pub fn register_components(world: &mut World) {
     world.register::<Position>();
     world.register::<Renderable>();
