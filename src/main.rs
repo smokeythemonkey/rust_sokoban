@@ -6,13 +6,16 @@ use ggez::{
 use specs::{RunNow, World, WorldExt};
 use std::path;
 
+mod audio;
 mod components;
 mod constants;
 mod entities;
+mod game_events;
 mod map;
 mod resources;
 mod systems;
 
+use crate::audio::*;
 use crate::components::*;
 use crate::map::*;
 use crate::resources::*;
@@ -53,6 +56,11 @@ impl event::EventHandler<ggez::GameError> for Game {
             let mut time = self.world.write_resource::<Time>();
             time.delta += timer::delta(context)
         }
+
+        {
+            let mut es = EventSystem { context };
+            es.run_now(&self.world);
+        }
         Ok(())
     }
 
@@ -83,13 +91,16 @@ pub fn main() -> GameResult {
     register_components(&mut world);
     register_resources(&mut world);
     initialize_level(&mut world);
+
     // Create a game context and event loop
     let context_builder = ggez::ContextBuilder::new("rust_sokoban", "sokoban")
         .window_setup(conf::WindowSetup::default().title("Rust Sokoban!"))
         .window_mode(conf::WindowMode::default().dimensions(800.0, 600.0))
         .add_resource_path(path::PathBuf::from("./resources"));
 
-    let (context, event_loop) = context_builder.build()?;
+    let (mut context, event_loop) = context_builder.build()?;
+    initialize_sounds(&mut world, &mut context);
+
     // Create the game state
     let game = Game { world };
     // Run the main event loop

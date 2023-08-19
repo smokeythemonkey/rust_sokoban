@@ -1,15 +1,17 @@
 use crate::components::*;
 use crate::constants::*;
+use crate::game_events::{EntityMoved, Event};
+use crate::resources::EventQueue;
 use crate::resources::{Gameplay, InputQueue};
 use ggez::event::KeyCode;
 use specs::{world::Index, Entities, Join, ReadStorage, System, Write, WriteStorage};
-
 use std::collections::HashMap;
 
 pub struct InputSystem {}
 
 impl<'a> System<'a> for InputSystem {
     type SystemData = (
+        Write<'a, EventQueue>,
         Write<'a, InputQueue>,
         Write<'a, Gameplay>,
         Entities<'a>,
@@ -20,8 +22,16 @@ impl<'a> System<'a> for InputSystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut input_queue, mut gameplay, entities, mut positions, players, movables, immovables) =
-            data;
+        let (
+            mut events,
+            mut input_queue,
+            mut gameplay,
+            entities,
+            mut positions,
+            players,
+            movables,
+            immovables,
+        ) = data;
 
         let mut to_move = Vec::new();
 
@@ -62,7 +72,13 @@ impl<'a> System<'a> for InputSystem {
                         Some(id) => to_move.push((key, id.clone())),
                         None => match immov.get(&pos) {
                             Some(_id) => to_move.clear(),
-                            None => break,
+                            None => match immov.get(&pos) {
+                                Some(_id) => {
+                                    to_move.clear();
+                                    events.events.push(Event::PlayerHitObstacle {})
+                                }
+                                None => break,
+                            },
                         },
                     }
                 }
@@ -84,6 +100,7 @@ impl<'a> System<'a> for InputSystem {
                     _ => (),
                 }
             }
+            events.events.push(Event::EntityMoved(EntityMoved { id }));
         }
     }
 }

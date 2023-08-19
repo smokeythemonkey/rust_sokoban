@@ -23,7 +23,10 @@ pub fn create_box(world: &mut World, position: Position, color: BoxColor) {
     world
         .create_entity()
         .with(Position { z: 10, ..position })
-        .with(Renderable::new_static(format!("/images/box_{}.png", color)))
+        .with(Renderable::new_animated(vec![
+            format!("/images/box_{}_1.png", color),
+            format!("/images/box_{}_2.png", color),
+        ]))
         .with(Box { color })
         .with(Movable)
         .build();
@@ -46,9 +49,9 @@ pub fn create_player(world: &mut World, position: Position) {
         .create_entity()
         .with(Position { z: 10, ..position })
         .with(Renderable::new_animated(vec![
-            "images/player_1.png".to_string(),
-            "images/player_2.png".to_string(),
-            "images.player_3.png".to_string(),
+            "/images/player_1.png".to_string(),
+            "/images/player_2.png".to_string(),
+            "/images/player_3.png".to_string(),
         ]))
         .with(Player {})
         .with(Movable)
